@@ -34,48 +34,57 @@ const countdownDiv = document.getElementById('countdown');
 
 // --- WALLET CONNECT ---
 connectWalletBtn.onclick = async () => {
-    if (window.ethereum) {
-        provider = new ethers.BrowserProvider(window.ethereum);
-        await provider.send("eth_requestAccounts", []);
-        signer = await provider.getSigner();
-        userAddress = await signer.getAddress();
-        walletAddressDiv.textContent = userAddress.slice(0, 6) + '...' + userAddress.slice(-4);
-        connectWalletBtn.style.display = 'none';
-        contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer);
-        await refreshUI();
-    } else {
-        alert("Please install MetaMask or another wallet.");
+    try {
+        if (window.ethereum) {
+            provider = new ethers.BrowserProvider(window.ethereum);
+            await provider.send("eth_requestAccounts", []);
+            signer = await provider.getSigner();
+            userAddress = await signer.getAddress();
+            walletAddressDiv.textContent = userAddress.slice(0, 6) + '...' + userAddress.slice(-4);
+            connectWalletBtn.style.display = 'none';
+            contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer);
+            await refreshUI();
+        } else {
+            alert("Please install MetaMask or another wallet.");
+        }
+    } catch (e) {
+        console.error("Wallet connect error:", e);
+        alert("Wallet connection failed. See console for details.");
     }
 };
 
 // --- UI LOGIC ---
 async function refreshUI() {
-    if (!contract) return;
-    const drawNumber = await contract.currentDrawNumber();
-    drawNumberSpan.textContent = drawNumber;
+    try {
+        if (!contract) return;
+        const drawNumber = await contract.currentDrawNumber();
+        drawNumberSpan.textContent = drawNumber;
 
-    // Fetch all ticket owners in parallel
-    const ownerPromises = [];
-    for (let i = 1; i <= TICKETS_PER_DRAW; i++) {
-        ownerPromises.push(contract.getTicketOwner(drawNumber, i));
-    }
-    const owners = await Promise.all(ownerPromises);
+        // Fetch all ticket owners in parallel
+        const ownerPromises = [];
+        for (let i = 1; i <= TICKETS_PER_DRAW; i++) {
+            ownerPromises.push(contract.getTicketOwner(drawNumber, i));
+        }
+        const owners = await Promise.all(ownerPromises);
 
-    // Find owned tickets for the user
-    let ownedTickets = [];
-    let sold = 0;
-    for (let i = 0; i < TICKETS_PER_DRAW; i++) {
-        if (owners[i] && owners[i] !== "0x0000000000000000000000000000000000000000") {
-            sold++;
-            if (userAddress && owners[i].toLowerCase() === userAddress.toLowerCase()) {
-                ownedTickets.push(i + 1);
+        // Find owned tickets for the user
+        let ownedTickets = [];
+        let sold = 0;
+        for (let i = 0; i < TICKETS_PER_DRAW; i++) {
+            if (owners[i] && owners[i] !== "0x0000000000000000000000000000000000000000") {
+                sold++;
+                if (userAddress && owners[i].toLowerCase() === userAddress.toLowerCase()) {
+                    ownedTickets.push(i + 1);
+                }
             }
         }
+        ticketsSoldSpan.textContent = sold;
+        renderTicketGrid(owners, ownedTickets);
+        renderOwnedTickets(ownedTickets);
+    } catch (e) {
+        console.error("refreshUI error:", e);
+        alert("Error loading lottery data. See console for details.");
     }
-    ticketsSoldSpan.textContent = sold;
-    renderTicketGrid(owners, ownedTickets);
-    renderOwnedTickets(ownedTickets);
-    // TODO: Add countdown and winner logic
 }
 
 function renderTicketGrid(owners, ownedTickets) {
@@ -133,6 +142,10 @@ async function buyTicket() {
 
 // --- INIT ---
 // Optionally, auto-connect if wallet already connected
-if (window.ethereum && window.ethereum.selectedAddress) {
-    connectWalletBtn.click();
-} 
+window.addEventListener('DOMContentLoaded', async () => {
+    if (window.ethereum && window.ethereum.selectedAddress) {
+        await connectWalletBtn.onclick();
+    } else {
+        await refreshUI();
+    }
+}); 
