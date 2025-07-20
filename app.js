@@ -51,28 +51,34 @@ connectWalletBtn.onclick = async () => {
 // --- UI LOGIC ---
 async function refreshUI() {
     if (!contract) return;
-    // Get draw number
     const drawNumber = await contract.currentDrawNumber();
     drawNumberSpan.textContent = drawNumber;
-    // Get tickets sold and owned
-    let sold = 0;
-    let ownedTickets = [];
+
+    // Fetch all ticket owners in parallel
+    const ownerPromises = [];
     for (let i = 1; i <= TICKETS_PER_DRAW; i++) {
-        const owner = await contract.getTicketOwner(drawNumber, i);
-        if (owner && owner !== "0x0000000000000000000000000000000000000000") {
+        ownerPromises.push(contract.getTicketOwner(drawNumber, i));
+    }
+    const owners = await Promise.all(ownerPromises);
+
+    // Find owned tickets for the user
+    let ownedTickets = [];
+    let sold = 0;
+    for (let i = 0; i < TICKETS_PER_DRAW; i++) {
+        if (owners[i] && owners[i] !== "0x0000000000000000000000000000000000000000") {
             sold++;
-            if (userAddress && owner.toLowerCase() === userAddress.toLowerCase()) {
-                ownedTickets.push(i);
+            if (userAddress && owners[i].toLowerCase() === userAddress.toLowerCase()) {
+                ownedTickets.push(i + 1);
             }
         }
     }
     ticketsSoldSpan.textContent = sold;
-    renderTicketGrid(drawNumber, ownedTickets);
+    renderTicketGrid(owners, ownedTickets);
     renderOwnedTickets(ownedTickets);
     // TODO: Add countdown and winner logic
 }
 
-function renderTicketGrid(drawNumber, ownedTickets) {
+function renderTicketGrid(owners, ownedTickets) {
     ticketGrid.innerHTML = '';
     for (let i = 1; i <= TICKETS_PER_DRAW; i++) {
         const ticketDiv = document.createElement('div');
@@ -81,23 +87,21 @@ function renderTicketGrid(drawNumber, ownedTickets) {
             <div class="ticketNumber">#${i}</div>
             <img src="${IMAGE_URL}" alt="Ticket">
         `;
-        if (ownedTickets.includes(i)) {
-            ticketDiv.classList.add('owned');
-            ticketDiv.innerHTML += '<div>Owned</div>';
+        const owner = owners[i - 1];
+        if (owner && owner !== "0x0000000000000000000000000000000000000000") {
+            if (userAddress && owner.toLowerCase() === userAddress.toLowerCase()) {
+                ticketDiv.classList.add('owned');
+                ticketDiv.innerHTML += '<div>Owned</div>';
+            } else {
+                ticketDiv.classList.add('sold');
+                ticketDiv.innerHTML += '<div>Sold</div>';
+            }
         } else {
-            // Check if sold
-            contract.getTicketOwner(drawNumber, i).then(owner => {
-                if (owner && owner !== "0x0000000000000000000000000000000000000000") {
-                    ticketDiv.classList.add('sold');
-                    ticketDiv.innerHTML += '<div>Sold</div>';
-                } else {
-                    const buyBtn = document.createElement('button');
-                    buyBtn.className = 'buyBtn';
-                    buyBtn.textContent = 'Buy Now';
-                    buyBtn.onclick = () => buyTicket();
-                    ticketDiv.appendChild(buyBtn);
-                }
-            });
+            const buyBtn = document.createElement('button');
+            buyBtn.className = 'buyBtn';
+            buyBtn.textContent = 'Buy Now';
+            buyBtn.onclick = () => buyTicket();
+            ticketDiv.appendChild(buyBtn);
         }
         ticketGrid.appendChild(ticketDiv);
     }
