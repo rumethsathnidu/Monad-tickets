@@ -7,13 +7,20 @@ body {
     min-height: 100vh;
 }
 header {
+    position: relative;
     background: rgba(44, 0, 80, 0.95);
     color: #fff;
     padding: 1.5rem 2rem;
     display: flex;
     align-items: center;
-    justify-content: space-between;
+    justify-content: flex-start;
     box-shadow: 0 2px 12px rgba(44,0,80,0.12);
+}
+#connectWalletBtn, #walletAddress {
+    position: absolute;
+    top: 1.5rem;
+    right: 2rem;
+    margin-left: 0;
 }
 header h1 {
     margin: 0;
@@ -37,7 +44,6 @@ header h1 {
     transform: translateY(-2px) scale(1.04);
 }
 #walletAddress {
-    margin-left: 1rem;
     font-size: 0.95rem;
     color: #f357a8;
 }
