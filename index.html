@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Monad Lottery</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header>
+        <h1>Monad Lottery</h1>
+        <button id="connectWalletBtn">Connect Wallet</button>
+        <div id="walletAddress"></div>
+    </header>
+    <main>
+        <section id="info">
+            <p>Each ticket costs <b>0.5 MON</b>. 16 tickets per draw. Winner gets <b>5 MON</b>, creator gets <b>3 MON</b>.</p>
+            <p>Draw starts automatically 30 seconds after all tickets are sold. If not all tickets are sold in 24 hours, the round times out and a new one begins.</p>
+            <p>Tickets are soulbound NFTs (non-transferable).</p>
+        </section>
+        <section id="drawStatus">
+            <div>Draw #: <span id="drawNumber">-</span></div>
+            <div>Tickets Sold: <span id="ticketsSold">0</span>/16</div>
+            <div id="countdown"></div>
+        </section>
+        <section id="ticketGrid">
+            <!-- 4x4 grid will be rendered here -->
+        </section>
+        <section id="userTickets">
+            <h2>Your Tickets</h2>
+            <ul id="ownedTickets"></ul>
+        </section>
+        <section id="winnerAnnouncement" style="display:none;">
+            <h2>Winner!</h2>
+            <div id="winnerInfo"></div>
+        </section>
+    </main>
+    <script src="https://cdn.jsdelivr.net/npm/ethers@6.7.0/dist/ethers.umd.min.js"></script>
+    <script src="app.js"></script>
+</body>
+</html> 
