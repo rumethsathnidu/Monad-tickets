@@ -16,7 +16,7 @@ const CONTRACT_ABI = [
 ];
 const TICKETS_PER_DRAW = 16;
 const TICKET_PRICE = 0.5;
-const IMAGE_URL = "mon ticket.png";
+const IMAGE_URL = "https://raw.githubusercontent.com/rumethsathnidu/Monad-tickets/main/mon%20ticket.png";
 
 // --- STATE ---
 let provider, signer, contract, userAddress;
